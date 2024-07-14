@@ -1,6 +1,7 @@
 from ntscraper import Nitter
 from pprint import pprint
 import ast
+import csv
 
 LOAD_DATA = False
 # since -> start date
@@ -10,11 +11,11 @@ if LOAD_DATA:
     scraper = Nitter(log_level=1, skip_instance_check=False)
     tweets = scraper.get_tweets("akshitkhatri20", mode="user", number=5)
     pprint(tweets)
-    with open("tweets.txt", 'w', encoding='utf-8') as tweet:
+    with open("data/tweets.txt", 'w', encoding='utf-8') as tweet:
         tweet.write(str(tweets))
     LOAD_DATA = False
 else:
-    with open("tweets.txt", encoding='utf-8') as tweet:
+    with open("data/tweets.txt", encoding='utf-8') as tweet:
         tweets = tweet.read()
         tweets = ast.literal_eval(tweets)
 
@@ -38,3 +39,8 @@ for tweet in tweets['tweets']:
     tweets_csv.append(tweet_csv)
 
 pprint(tweets_csv)
+
+with open("data/tweets.csv", 'w', encoding='utf-8') as file:
+    writer = csv.DictWriter(file, fieldnames=('link', 'text', 'user', 'quotes', 'retweets', 'comments'))
+    writer.writeheader()
+    writer.writerows(tweets_csv)
