@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from pprint import pprint
+import csv
 
 BASE_URL = "https://www.imdb.com/search/title/?release_date=2023-01-01,2024-07-14"
 headers = {
@@ -21,19 +22,47 @@ else:
 soup = BeautifulSoup(html_doc, 'html.parser')
 #print(soup.prettify())
 
-movies = soup.find_all("div", class_='ipc-page-grid__item ipc-page-grid__item--span-2')
-#print(movies)
+movies = soup.find_all("ul", class_='ipc-metadata-list ipc-metadata-list--dividers-between sc-748571c8-0 jmWPOZ detailed-list-view ipc-metadata-list--base')
+movies_csv = []
 count = 0
-for movie in movies:
-    #print(movie)
-    count = count + 1
-    name = movie.find_all('a', class_='ipc-title-link-wrapper')
-    pprint(name)
-    print(name[3:])
-    year = movie.find_all('span', class_='sc-b189961a-8 kLaxqf dli-title-metadata-item')
-    pprint(year)
-    rating = movie.find_all('span', {"aria-label": lambda x: x and x.startswith("IMDb rating:")})
-    # rating = rating['aria-label'].split(":")[1].strip()
-    pprint(rating)
+names = soup.find_all('a', class_='ipc-title-link-wrapper')
+print(type(movies))
+name_csv = []
+year_csv = []
+rating_csv = []
+for name in names:
+    name_csv.append(name.string[3:].strip())
+years = soup.find_all('span', class_='sc-b189961a-8 kLaxqf dli-title-metadata-item')
+for year in years:
+    year_csv.append(year.string)
+ratings = soup.find_all('span', {"aria-label": lambda x: x and x.startswith("IMDb rating:")})
+for rating in ratings:
+    rating_csv.append(rating['aria-label'].split(":")[1].strip())
+print(len(name_csv))
+print(year_csv)
+print(rating_csv)
+year_csv_grouped = [year_csv[i:i + 3] for i in range(0, len(year_csv), 3)]
+print(len(year_csv_grouped))
+for i, name in enumerate(name_csv):
+    if i == 20:
+        break
+    movie_name = name_csv[i]
+    movie_rating = rating_csv[i]
+    year_rating = year_csv_grouped[i]
+    movie_csv = {
+        "Name": movie_name,
+        "Rating": movie_rating,
+        "Year": year_rating[0],
+        "Duration": year_rating[1],
+        "Certificate": year_rating[2]
+    }
+    movies_csv.append(movie_csv)
+pprint(movies_csv)
 
-print(count)
+with open("data/movies.csv",'w') as file:
+    writer = csv.DictWriter(file, fieldnames=('Name','Rating','Year','Duration','Certificate'))
+    writer.writeheader()
+    writer.writerows(movies_csv)
+
+#pprint(movies_csv)
+#print(count)
